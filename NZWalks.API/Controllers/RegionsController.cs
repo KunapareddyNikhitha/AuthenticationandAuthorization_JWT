@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
 using System.Data;
+using System.Text.Json;
 
 namespace NZWalks.API.Controllers
 {
@@ -16,45 +18,64 @@ namespace NZWalks.API.Controllers
     [ApiController]
     public class RegionsController : ControllerBase
     {
-        //private readonly NZWalksDbContext dbContext;
+        private readonly NZWalksDbContext dbContext;
         private readonly IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger;
 
-        public RegionsController(IRegionRepository regionRepository, IMapper mapper)
+        public RegionsController(NZWalksDbContext dbContext, 
+            IRegionRepository regionRepository,
+            IMapper mapper,
+            ILogger<RegionsController> logger)
         {
-            //this.dbContext = dbContext;
+            this.dbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
 
         [HttpGet]
-        [Authorize(Roles ="Reader")]
+        //[Authorize(Roles ="Reader")]
         public async Task<IActionResult> GetAll()
         {
-            // Get Data From Database - Domain models
-            //var regionsDomain = await dbContext.Regions.ToListAsync();
+            try
+            {
+                throw new Exception("This is a custom Exception");
+                logger.LogInformation("GetAll Regions Method was Invoked.");
 
-            var regionsDomain = await regionRepository.GetAllAsync();
 
-            // Map Domain Models to DTOs
-            //var regionsDto = new List<RegionDto>();
-            //foreach (var regionDomain in regionsDomain)
-            //{
-            //    regionsDto.Add(new RegionDto()
-            //    {
-            //        Id = regionDomain.Id,
-            //        Code = regionDomain.Code,
-            //        Name = regionDomain.Name,
-            //        RegionImageUrl = regionDomain.RegionImageUrl
-            //    });
-            //}
+                // Get Data From Database - Domain models
+                //var regionsDomain = await dbContext.Regions.ToListAsync();
 
-            //var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
+                var regionsDomain = await regionRepository.GetAllAsync();
 
-            // Return DTOs
-            //return Ok(regionsDto);
-            return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+                // Map Domain Models to DTOs
+                //var regionsDto = new List<RegionDto>();
+                //foreach (var regionDomain in regionsDomain)
+                //{
+                //    regionsDto.Add(new RegionDto()
+                //    {
+                //        Id = regionDomain.Id,
+                //        Code = regionDomain.Code,
+                //        Name = regionDomain.Name,
+                //        RegionImageUrl = regionDomain.RegionImageUrl
+                //    });
+                //}
+
+                //var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
+
+                // Return DTOs
+                //return Ok(regionsDto);
+                logger.LogInformation($"Finished GetAll Regions Request with data: {JsonSerializer.Serialize(regionsDomain)}");
+
+                return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+                throw;
+            }
         }
 
         [HttpGet]
